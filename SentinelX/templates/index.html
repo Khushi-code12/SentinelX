@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SentinelX Console</title>
+  <meta name="theme-color" content="#0a0d12">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/X.png') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="brand">
+      <img src="{{ url_for('static', filename='images/X.png') }}" alt="" width="36" height="36">
+      <div>
+        <div class="brand-name">SENTINEL<span>X</span></div>
+        <div class="brand-sub">Threat Detection Console</div>
+      </div>
+    </div>
+
+    <div class="status-cluster">
+      <span class="pill" id="cam-pill"><span class="dot"></span><span class="pill-label">Camera</span><span class="pill-value" id="cam-state">connecting</span></span>
+      <span class="pill" id="fps-pill"><i class="fas fa-gauge-high"></i><span class="pill-value mono" id="fps-value">--</span><span class="pill-label">fps</span></span>
+      <span class="pill" id="tg-pill"><i class="fab fa-telegram"></i><span class="pill-value" id="tg-state">--</span></span>
+      <span class="pill pill-plain"><i class="far fa-clock"></i><span class="mono" id="session-time">00:00:00</span></span>
+    </div>
+
+    <div class="clock mono" aria-label="Current time">
+      <div id="clock-time">--:--:--</div>
+      <div class="clock-date" id="clock-date"></div>
+    </div>
+  </header>
+
+  <!-- Threat level -->
+  <section id="threat" class="threat threat--clear" role="status" aria-live="polite">
+    <div class="threat-icon"><i class="fas fa-shield-halved" id="threat-icon"></i></div>
+    <div class="threat-text">
+      <div class="threat-level" id="threat-level">ALL CLEAR</div>
+      <div class="threat-detail" id="threat-detail">No threats in frame</div>
+    </div>
+    <div class="threat-meta">
+      <span class="muted">Last alert</span>
+      <span class="mono" id="last-alert">never</span>
+    </div>
+  </section>
+
+  <main class="layout">
+    <!-- Live feed -->
+    <section class="panel feed-panel">
+      <div class="panel-head">
+        <h2><i class="fas fa-video"></i> CAM-01 <span class="muted">/ Live feed</span></h2>
+        <div class="actions">
+          <button class="btn" id="capture-btn" type="button"><i class="fas fa-camera"></i><span>Snapshot</span></button>
+          <button class="btn btn-icon" id="fullscreen-btn" type="button" aria-label="Fullscreen" title="Fullscreen"><i class="fas fa-expand"></i></button>
+        </div>
+      </div>
+
+      <div class="feed" id="feed">
+        <img id="feed-img" src="{{ url_for('video_feed') }}" alt="Live camera feed with detections">
+        <span class="corner tl"></span><span class="corner tr"></span>
+        <span class="corner bl"></span><span class="corner br"></span>
+        <div class="feed-tag feed-tag-left"><span class="rec-dot"></span> LIVE · CAM-01</div>
+        <div class="feed-tag feed-tag-right mono" id="feed-clock"></div>
+        <div class="feed-offline" id="feed-offline" hidden>
+          <i class="fas fa-video-slash"></i>
+          <div>No signal</div>
+          <small>Waiting for camera…</small>
+        </div>
+      </div>
+
+      <div class="class-strip" id="class-strip" aria-label="Live detection confidence per class"></div>
+    </section>
+
+    <!-- KPIs -->
+    <section class="kpis">
+      <div class="kpi">
+        <div class="kpi-icon"><i class="fas fa-bell"></i></div>
+        <div><div class="kpi-label">Total alerts</div><div class="kpi-value mono" id="alerts-count">0</div></div>
+      </div>
+      <div class="kpi kpi--crit">
+        <div class="kpi-icon"><i class="fas fa-gun"></i></div>
+        <div><div class="kpi-label">Weapon alerts</div><div class="kpi-value mono" id="weapons-count">0</div></div>
+      </div>
+      <div class="kpi kpi--warn">
+        <div class="kpi-icon"><i class="fas fa-hand-fist"></i></div>
+        <div><div class="kpi-label">Violence alerts</div><div class="kpi-value mono" id="violence-count">0</div></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon"><i class="fas fa-crosshairs"></i></div>
+        <div><div class="kpi-label">Threshold</div><div class="kpi-value mono" id="threshold-kpi">--</div></div>
+      </div>
+    </section>
+
+    <!-- Side column -->
+    <aside class="side">
+      <section class="panel alerts-panel">
+        <div class="panel-head">
+          <h2><i class="fas fa-list-ul"></i> Alert log <span class="badge" id="alerts-badge">0</span></h2>
+          <div class="actions">
+            <button class="btn btn-icon" id="export-alerts-btn" type="button" aria-label="Export CSV" title="Export CSV"><i class="fas fa-file-arrow-down"></i></button>
+            <button class="btn btn-icon btn-danger" id="clear-alerts-btn" type="button" aria-label="Clear alerts" title="Clear alerts"><i class="fas fa-trash-can"></i></button>
+          </div>
+        </div>
+        <ol class="alert-list" id="alerts-container"></ol>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2><i class="fas fa-sliders"></i> Detection settings</h2>
+        </div>
+        <form class="settings" id="settings-form">
+          <label class="field">
+            <span class="field-row"><span>Confidence threshold</span><output class="mono" id="confidence-value">50%</output></span>
+            <input type="range" id="confidence" min="10" max="90" value="50">
+          </label>
+          <label class="field">
+            <span class="field-row"><span>Alert cooldown</span><output class="mono" id="cooldown-value">10s</output></span>
+            <input type="range" id="alert-cooldown" min="5" max="60" value="10">
+          </label>
+          <label class="switch">
+            <input type="checkbox" id="telegram-alerts" checked>
+            <span class="switch-track"></span>
+            <span>Telegram notifications <small class="muted" id="tg-hint"></small></span>
+          </label>
+          <label class="switch">
+            <input type="checkbox" id="sound-alerts" checked>
+            <span class="switch-track"></span>
+            <span>Sound on new alert <small class="muted">(this browser)</small></span>
+          </label>
+          <button type="button" class="btn btn-primary" id="save-config"><i class="fas fa-floppy-disk"></i><span>Save settings</span></button>
+        </form>
+      </section>
+    </aside>
+  </main>
+
+  <!-- Snapshot viewer -->
+  <dialog class="lightbox" id="lightbox">
+    <div class="lightbox-head">
+      <div id="lightbox-caption"></div>
+      <div class="actions">
+        <a class="btn btn-icon" id="lightbox-open" target="_blank" rel="noopener" aria-label="Open full size" title="Open full size"><i class="fas fa-up-right-from-square"></i></a>
+        <button class="btn btn-icon" id="lightbox-close" type="button" aria-label="Close"><i class="fas fa-xmark"></i></button>
+      </div>
+    </div>
+    <img id="lightbox-img" alt="Alert snapshot">
+  </dialog>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
