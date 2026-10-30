@@ -1,8 +1,0 @@
-flask>=3.0
-flask_sqlalchemy>=3.1
-opencv-python>=4.8
-numpy
-ultralytics>=8.3        # YOLO11 support; installs torch/torchvision
-python-telegram-bot>=21.0
-python-dotenv>=1.0
-waitress>=3.0           # production WSGI server (Windows and Linux)
