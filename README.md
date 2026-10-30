@@ -23,7 +23,7 @@ detection of violence or a weapon with a snapshot, and sends it to Telegram.
 ## Quick start
 
 ```bash
-git clone https://github.com/Jatin-code16/SentinelX.git
+git clone https://github.com/Khushi-code12/SentinelX.git
 cd SentinelX
 python -m venv venv
 venv\Scripts\activate          # Linux/macOS: source venv/bin/activate
